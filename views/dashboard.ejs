@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<link rel="stylesheet" href="css/style.css">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+</head>
+
+<body>
+    <h2 class="mt-4">Tour Management System Management dashboard</h2>
+    <p class="lead mb-3" style="float: left; margin-top: 10px;">Welcome <%= name %></p>
+    <a href="/users/logout" class="btn btn-secondary" style="display: block; float:right;">Logout</a><br /><br>
+    <hr />
+
+    <div id="enquiries-display" class="enquiries_container">
+       
+        <h2>Enquiries</h2>
+        <table id="enquiries-table" class="enquiry_table">
+            <thead>
+                <th>Name</th>
+                <th>Destination</th>
+                <th>Address</th>
+                <th>Contact No</th>
+                <th>Email</th>
+                <th>No of People</th>
+                <th>Comments</th>
+                <th>Action</th>
+            </thead>
+
+        </table>
+    </div>
+    <br /><br /><br />
+    <button type="button" class="collapsed">Add Packages</button>
+    <form enctype="multipart/form-data" method="POST" class="add-package" id="add-form">
+        <label style="margin-top: 20px;" for="Package_destination">Destination <b style="color: red;">*</b></label><br>
+        <input placeholder="Package_destination" name="destination" type="text" required><br><br>
+        <label style="margin-top: 20px;" for="price">Price <b style="color: red;">*</b></label>
+        <input placeholder="Price" name="price" style="width: 15%;" type="number"><br><br>
+        <label style="margin-top: 20px;margin-right: 10%;" for="number_days"> Number of Days <b style="color: red;">*</b></label>
+        <input placeholder="Days" type="number" name="number_days" style="width: 20%; margin-right: 15%;"><br>
+        <label style="margin-top: 20px;" for="number_nights">Number of Nights <b style="color: red;">*</b></label>
+        <input placeholder="Nights" type="number" name="number_nights" style="width: 20%;"><br><br>
+        <label for="hotel">Hotel of Stay<b style="color: red;">*</b></label><br>
+        <input type="text" placeholder="Hotel Name" name="hotel"/><br><br>
+        <label style="margin-top: 20px;" for="description">Description</label><br>
+        <textarea placeholder="Description" maxlength="200" name="description"
+            style="width: 200px; height: 150px; "></textarea><br><br>
+        <label for="package_img">Upload Image for package <b style="color: red;">*</b></label>
+        <input type="file" name="package_img">
+        <br><br>
+        <button type="submit" class="add_pkg_btn" style="margin-bottom: 20px; float: right;">Add Package</button>
+    </form>
+
+
+    <br /><br /><br />
+    <div id="packages" class="packages_list">
+        <h2 style="width: 30%; margin: auto;     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+font-style: oblique;        ">Packages List</h2>
+    <div id="loader_anim" style="margin-bottom: 10px;" class="loader_anim_container" >
+        <div class="loader"></div>
+        <p style="width: 100%; margin: auto;">Loading Please wait!!</p>
+        </div> 
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-storage.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-analytics.js"></script>
+
+
+<script>
+    var firebaseConfig = {
+        apiKey: "AIzaSyBdcc_Y8oCfZVqt7ONYW3qiZyB329amTaA",
+        authDomain: "package-images.firebaseapp.com",
+        projectId: "package-images",
+        storageBucket: "package-images.appspot.com",
+        messagingSenderId: "510354842955",
+        appId: "1:510354842955:web:73dd6cbfcfecdde5af74ce",
+        measurementId: "G-8VVLV1V2CS"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
+    var storage = firebase.storage();
+
+    async function getData() {
+        await axios.get("http://localhost:3000/api/enquiries")
+            .then((res) => {
+                createTable(res.data)
+            })
+            .catch((err) => console.log(err))
+        await axios.get("http://localhost:3000/api/packages")
+            .then((res) => {
+                createTabulationPackages(res.data)
+            })
+            .catch((err) => console.log(err))
+    }
+
+    function createTable(data) {
+        var table = document.getElementById('enquiries-table');
+        var tbody = document.createElement('tbody');
+        table.appendChild(tbody)
+        table.appendChild(tbody);
+        for (var i = 0; i < data.length; i++) {
+            const tr = document.createElement('tr');
+            const name = document.createElement('td')
+            name.innerText = data[i].name
+            const destination = document.createElement('td')
+            destination.innerText = data[i].package
+            const address = document.createElement('td')
+            address.innerText = data[i].country + "," + data[i].city
+            const contact = document.createElement('td')
+            contact.innerText = data[i].contact_no
+            const email = document.createElement('td')
+            email.innerText = data[i].email
+            const no_people = document.createElement('td')
+            no_people.innerText = data[i].no_of_people
+            const comments = document.createElement('td')
+            comments.innerText = data[i].comments
+            var deleteBtn = document.createElement('button')
+            deleteBtn.innerHTML = "Delete"
+            deleteBtn.className = "package_delete"
+            deleteBtn.id = data[i]._id
+            const deleteSection = document.createElement('td')
+            deleteSection.appendChild(deleteBtn)
+            tr.appendChild(name)
+            tr.appendChild(destination)
+            tr.appendChild(address)
+            tr.appendChild(contact)
+            tr.appendChild(email)
+            tr.appendChild(no_people)
+            tr.appendChild(comments)
+            tr.appendChild(deleteSection)
+            tbody.appendChild(tr);
+            table.appendChild(tbody)
+            deleteBtn.addEventListener("click", async (e) => {
+                const id = e.target.id
+                console.log(id)
+                await axios.delete("http://localhost:3000/api/enquiries/" + id)
+                    .then((res) => {
+                        window.alert("Delete Success")
+                        location.reload()}).catch((err) => console.log(err))
+            })
+        }
+    }
+
+    async function createTabulationPackages(data) {
+        var storage = firebase.storage()
+        for (var i = 0; i < data.length; i++) {
+            var currentitem = data[i]
+            var storageRef = storage.ref()
+            var fileRef = storageRef.child(data[i].image_url)
+            await storageRef.child(data[i].image_url).getDownloadURL()
+                .then((url) => {
+                    var xhr = new XMLHttpRequest();
+                    xhr.responseType = 'blob';
+                    xhr.onload = (event) => {
+                        var blob = xhr.response;
+                    };
+                    xhr.open('GET', url);
+                    xhr.send();
+                    var element = `<div class="packageSection"  style=" border-radius:10px; height:auto;">
+                                <img src=${url} width="20%" height="100%"  style="display: block;  margin: 10px; float: left;" />
+                                <section style="position: relative;
+                                display: block;
+                                margin-left: 150px; ">
+                                    <li class="list__item" style="list-style: none; margin-left:auto; float: left; ">
+                                        <h3 class="destination"> <b>Destination: </b>${currentitem.destination}</h3>
+                                        <h3 class="price"><b>Price: </b>${currentitem.price}</h3>
+                                        <h3 class="price"><b>Number of Days: </b>${currentitem.number_days} &ensp; <b>Number of Nights:</b>${currentitem.number_nights}</h3>
+                                        <h3><b>Hotel:</b>${currentitem.hotel}</h3>
+                                        <h3 class="price"><b>Description: </b>${currentitem.description}</h3>
+                                    </li>
+                                    <button type="button" id=${currentitem._id}
+                                    style=" float: right; position: relative; margin-right:50dp; margin-top: 20px;">Delete
+                                    package</button>
+                                </section>
+                    </div><br><br><br>`
+                            packages.innerHTML += element
+                    
+                }).catch((error) => {
+                    // A full list of error codes is available at
+                    // https://firebase.google.com/docs/storage/web/handle-errors
+                    switch (error.code) {
+                        case 'storage/object-not-found':
+                            console.log("object not found")
+                        case 'storage/unauthorized':
+                            console.log("access milena")
+                                ;
+                        case 'storage/canceled':
+                            console.log("cancelled")
+                        // User canceled the upload
+
+                        // ...
+
+                        case 'storage/unknown':
+                            console.log("unknown response")
+                        // Unknown error occurred, inspect the server response
+                    }
+                });
+                if(i==data.length-1){
+					console.log("end reached")
+					document.getElementById('loader_anim').style.display="none";
+				}
+        }
+    }
+
+    var coll = document.getElementsByClassName("collapsed");
+    coll[0].addEventListener("click", function () {
+        console.log("clicked")
+        this.classList.toggle("active");
+        var content = document.getElementById('add-form')
+        if (content.style.display === "block") {
+            content.style.display = "none";
+        } else {
+            content.style.display = "block";
+        }
+    });
+    const form = document.getElementById("add-form")
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const data = new FormData(e.target);
+        await axios.post("http://localhost:3000/api/packages", data, {
+            headers: { "Content-Type": "multipart/form-data" }
+        })
+            .then((res) =>{
+                window.alert("Post Success")
+                location.reload()
+            } )
+            .catch((err) => console.log(err))
+    })
+    var deletePkgBtn = document.getElementById('packages').addEventListener('click', async (e) => {
+        console.log("clicked: " + e.target.id)
+        var id = e.target.id
+        await axios.delete("http://localhost:3000/api/packages/" + id)
+            .then((res) => { 
+                window.alert("Delete Success")
+                location.reload(); })
+                .catch((err) => console.log(err))
+    })
+
+    getData()
+
+</script>
+
+</html>
